@@ -7,6 +7,7 @@
  */
 
 import 'dotenv/config';
+import { pathToFileURL } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import * as z from 'zod';
@@ -21,7 +22,7 @@ const config: WhmcsConfig = {
 };
 
 // Validate required configuration
-function validateConfig(): boolean {
+export function validateConfig(): boolean {
     if (!config.apiUrl || !config.apiIdentifier || !config.apiSecret) {
         console.error('Missing required WHMCS configuration. Please set the following environment variables:');
         console.error('  WHMCS_API_URL - The URL to your WHMCS installation (e.g., https://example.com/whmcs/)');
@@ -37,6 +38,7 @@ function validateConfig(): boolean {
 const whmcsClient = new WhmcsApiClient(config);
 
 // Create the MCP server
+export function createServer(): McpServer {
 const server = new McpServer({
     name: 'whmcs-mcp-server',
     version: '1.0.0',
@@ -1937,6 +1939,9 @@ server.registerResource(
     }
 );
 
+    return server;
+}
+
 // ========================================
 // START SERVER
 // ========================================
@@ -1947,12 +1952,20 @@ async function main() {
         console.error('Warning: WHMCS configuration incomplete. Tools will not function until configured.');
     }
 
+    const server = createServer();
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error('WHMCS MCP Server started');
+    console.error('WHMCS MCP Server started (stdio)');
 }
 
-main().catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-});
+// Only auto-start stdio transport when this file is the entry point
+// (not when imported by the HTTP server in http.ts).
+const isDirectRun =
+    process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectRun) {
+    main().catch((error) => {
+        console.error('Fatal error:', error);
+        process.exit(1);
+    });
+}

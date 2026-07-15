@@ -8,12 +8,15 @@
     "scarecr0w12"
   ],
   "bin": {
-    "whmcs-mcp-server": "./dist/index.js"
+    "whmcs-mcp-server": "./dist/index.js",
+    "whmcs-mcp-server-http": "./dist/http.js"
   },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:http": "node dist/http.js",
     "dev": "tsx src/index.ts",
+    "dev:http": "tsx src/http.ts",
     "watch": "tsc --watch",
     "test": "tsx src/test.ts",
     "lint": "tsc --noEmit",
@@ -57,9 +60,11 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "dotenv": "^17.2.3",
+    "express": "^5.1.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"

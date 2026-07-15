@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY tsconfig.json ./
@@ -29,7 +29,7 @@ RUN addgroup -g 1001 -S mcpuser && \
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production && \
+RUN npm install --omit=dev && \
     npm cache clean --force
 
 # Copy built files from builder
@@ -46,10 +46,17 @@ ENV WHMCS_API_URL=""
 ENV WHMCS_API_IDENTIFIER=""
 ENV WHMCS_API_SECRET=""
 ENV WHMCS_ACCESS_KEY=""
+ENV MCP_HTTP_PORT="3000"
+ENV MCP_HTTP_HOST="0.0.0.0"
+ENV MCP_AUTH_TOKEN=""
+ENV MCP_ALLOWED_HOSTS=""
 
-# Health check - verify node process is running
+# HTTP transport listens on this port
+EXPOSE 3000
+
+# Health check - hit the HTTP health endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "console.log('healthy')" || exit 1
+    CMD node -e "fetch('http://127.0.0.1:'+(process.env.MCP_HTTP_PORT||3000)+'/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 
-# Run the MCP server
-CMD ["node", "dist/index.js"]
+# Run the MCP server over HTTP
+CMD ["node", "dist/http.js"]
